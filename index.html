@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Visor IPA — FONDEPES · DICAPI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --navy:#0a2240;--navy-mid:#123458;
+  --accent:#1d9e75;--accent-light:#e1f5ee;
+  --amber:#ef9f27;--amber-dk:#854f0b;--amber-lt:#faeeda;
+  --red:#e24b4a;--red-dk:#a32d2d;--red-lt:#fcebeb;
+  --blue:#378add;--blue-dk:#185fa5;--blue-lt:#e6f1fb;
+  --bg:#f4f3f0;--border:#dddbd5;--border-lt:#eceae4;
+  --text:#181816;--muted:#6b6966;--white:#fff;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --r:8px;--rl:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+/* HEADER */
+.hdr{background:var(--navy);height:58px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid rgba(255,255,255,0.07)}
+.hdr-l{display:flex;align-items:center;gap:14px}
+.logo{width:34px;height:34px;border-radius:7px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#fff;flex-shrink:0}
+.hdr-t{font-size:13px;font-weight:500;color:#fff}
+.hdr-s{font-size:11px;color:rgba(255,255,255,0.45);margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.pill{display:flex;align-items:center;gap:6px;border-radius:99px;padding:3px 11px;font-size:11px;border:1px solid rgba(29,158,117,0.4);background:rgba(29,158,117,0.12);color:#5dcaa5}
+.pill.err{border-color:rgba(226,75,74,0.4);background:rgba(226,75,74,0.1);color:#f09595}
+.pill.ld{border-color:rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.4)}
+.pdot{width:6px;height:6px;border-radius:50%;background:#1d9e75;flex-shrink:0}
+.pill.err .pdot{background:var(--red)}
+.pill.ld .pdot{background:rgba(255,255,255,0.3)}
+.btn-h{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.8);border-radius:var(--r);padding:6px 13px;font-size:12px;font-family:var(--font);cursor:pointer}
+.btn-h:hover{background:rgba(255,255,255,0.14)}
+/* BODY */
+.body{max-width:1440px;margin:0 auto;padding:24px 28px 40px}
+/* STATE SCREENS */
+.ss{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:14px}
+.spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.sm{font-size:13px;color:var(--muted)}
+.ebox{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:28px 32px;text-align:center;max-width:480px}
+.ei{font-size:28px;margin-bottom:10px}
+.et{font-size:14px;font-weight:500;margin-bottom:6px}
+.eb{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+.btn-p{background:var(--navy);color:#fff;border:none;border-radius:var(--r);padding:9px 20px;font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer}
+.btn-p:hover{background:var(--navy-mid)}
+/* ALERTS */
+.al{border-radius:var(--rl);padding:12px 16px 12px 20px;margin-bottom:12px;border-left:3px solid}
+.al-r{background:#fff3f3;border-color:var(--red)}
+.al-a{background:#fffbf0;border-color:var(--amber)}
+.al-t{font-size:13px;font-weight:500;margin-bottom:3px}
+.al-r .al-t{color:#7a1a1a}.al-a .al-t{color:#6b3c08}
+.al-b{font-size:12px;line-height:1.55}
+.al-r .al-b{color:#922020}.al-a .al-b{color:#7a4510}
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:1024px){.sg{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.sg{grid-template-columns:repeat(2,1fr)}}
+.sc{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px}
+.sl{font-size:11px;color:var(--muted);margin-bottom:5px;line-height:1.3}
+.sv{font-size:27px;font-weight:500;line-height:1}
+.sub{font-size:11px;color:var(--muted);margin-top:3px}
+.sc.navy .sv{color:var(--navy)}.sc.green .sv{color:#0f6e56}
+.sc.amber .sv{color:var(--amber-dk)}.sc.red .sv{color:var(--red-dk)}.sc.gray .sv{color:#5f5e5a}
+/* CHARTS */
+.cr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+@media(max-width:768px){.cr{grid-template-columns:1fr}}
+.cc{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px}
+.ct{font-size:13px;font-weight:500;margin-bottom:13px}
+/* TABS */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.tab{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:6px 13px;font-size:12px;font-family:var(--font);cursor:pointer;color:var(--muted);transition:all .12s;display:flex;align-items:center;gap:6px}
+.tab:hover{border-color:var(--navy-mid);color:var(--navy)}
+.tab.act{background:var(--navy);border-color:var(--navy);color:#fff}
+.tc{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--bg);color:var(--muted)}
+.tab.act .tc{background:rgba(255,255,255,0.18);color:rgba(255,255,255,0.85)}
+/* FILTERS */
+.fb{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:11px;align-items:center}
+.fb input{padding:7px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:var(--font);background:var(--white);color:var(--text);outline:none;min-width:210px}
+.fb input:focus{border-color:var(--navy-mid)}
+.fb select{padding:7px 11px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:var(--font);background:var(--white);color:var(--text);outline:none;cursor:pointer}
+.fb select:focus{border-color:var(--navy-mid)}
+.fc{font-size:12px;color:var(--muted);margin-left:auto}
+/* TABLE */
+.tw{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.ts{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:1100px}
+thead th{background:#f7f6f2;padding:10px 13px;text-align:left;font-size:11px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:58px;z-index:10}
+thead th:hover{color:var(--navy)}
+tbody td{padding:10px 13px;border-bottom:1px solid var(--border-lt);vertical-align:top;font-size:12px;line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9f8f5!important}
+tbody tr.rc td{background:#fff4f4}
+tbody tr.rf td{background:#fff8f8}
+tbody tr.rw td{background:#fffcf4}
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
+.bg{background:var(--accent-light);color:#0f6e56}
+.bb{background:var(--blue-lt);color:var(--blue-dk)}
+.ba{background:var(--amber-lt);color:var(--amber-dk)}
+.br{background:var(--red-lt);color:var(--red-dk)}
+.bgr{background:#f1efe8;color:#5f5e5a}
+.tf{background:var(--navy);color:#fff;display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:500;white-space:nowrap}
+.tt{background:var(--amber-lt);color:var(--amber-dk);display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:500;white-space:nowrap}
+/* PAGINATION */
+.pag{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:1px solid var(--border-lt);font-size:12px;color:var(--muted)}
+.pbtns{display:flex;gap:6px;align-items:center}
+.pb{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:5px 11px;font-size:11px;font-family:var(--font);cursor:pointer;color:var(--text)}
+.pb:disabled{opacity:.38;cursor:not-allowed}
+.pb:not(:disabled):hover{border-color:var(--navy);color:var(--navy)}
+/* LEGEND */
+.leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:11px;font-size:11px;color:var(--muted)}
+.leg span{display:flex;align-items:center;gap:5px}
+.lsq{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+footer{text-align:center;padding:28px 0 16px;font-size:11px;color:var(--muted)}
+.empty-td{text-align:center;padding:38px!important;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="logo">F</div>
+    <div>
+      <div class="hdr-t">Visor Ejecutivo — Infraestructuras Pesqueras Artesanales</div>
+      <div class="hdr-s">FONDEPES · Trámites ante DICAPI · Especialidad Costas y Puertos</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="pill ld" id="pill"><span class="pdot"></span><span id="ptxt">Cargando...</span></div>
+    <button class="btn-h" onclick="cargar()">↻ Actualizar</button>
+  </div>
+</header>
+
+<div class="body">
+  <div class="ss" id="scrLoad"><div class="spin"></div><div class="sm">Cargando datos desde Google Sheets...</div></div>
+  <div class="ss" id="scrErr" style="display:none">
+    <div class="ebox">
+      <div class="ei">⚠</div>
+      <div class="et">No se pudo cargar el archivo</div>
+      <div class="eb" id="emsg">Verifica tu conexión o que el archivo esté publicado en Google Sheets.</div>
+      <button class="btn-p" onclick="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div id="alertas"></div>
+    <div class="sg" id="stats"></div>
+    <div class="cr">
+      <div class="cc"><div class="ct">Estado de autorizaciones</div><div style="position:relative;height:185px"><canvas id="cEst" role="img" aria-label="Estado de autorizaciones">.</canvas></div></div>
+      <div class="cc"><div class="ct">Titularidad de la autorización</div><div style="position:relative;height:185px"><canvas id="cTit" role="img" aria-label="Titularidad">.</canvas></div></div>
+    </div>
+    <div class="tabs" id="tabBar"></div>
+    <div class="fb">
+      <input type="text" id="srch" placeholder="Buscar IPA, titular, resolución, región..." oninput="filtrar()" />
+      <select id="fReg" onchange="filtrar()"><option value="">Todas las regiones</option></select>
+      <select id="fEst" onchange="filtrar()"><option value="">Todos los estados</option></select>
+      <select id="fTit" onchange="filtrar()"><option value="">Todos los titulares</option></select>
+      <span class="fc" id="fc"></span>
+    </div>
+    <div class="tw">
+      <div class="ts">
+        <table>
+          <thead><tr>
+            <th style="width:18%" onclick="ord('ipa')">IPA / Desembarcadero ↕</th>
+            <th style="width:9%"  onclick="ord('region')">Región ↕</th>
+            <th style="width:13%" onclick="ord('entidad')">Entidad titular IPA ↕</th>
+            <th style="width:13%" onclick="ord('docAdmin')">Doc. administración ↕</th>
+            <th style="width:13%" onclick="ord('resolucion')">Resolución DICAPI ↕</th>
+            <th style="width:9%"  onclick="ord('inicio')">Inicio vigencia ↕</th>
+            <th style="width:9%"  onclick="ord('termino')">Término vigencia ↕</th>
+            <th style="width:10%" onclick="ord('titular')">Titular autorización ↕</th>
+            <th style="width:7%"  onclick="ord('estado')">Estado ↕</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pag" id="pag"></div>
+    </div>
+    <div class="leg">
+      <span><span class="lsq" style="background:#fff4f4;border:1px solid #f7c1c1"></span>Vencida — titular tercero (sin responsabilidad FONDEPES)</span>
+      <span><span class="lsq" style="background:#fff8f8;border:1px solid #fac7c7"></span>Vencida — titular FONDEPES (gestionar renovación)</span>
+      <span><span class="lsq" style="background:#fffcf4;border:1px solid #fac775"></span>Por vencer en menos de 6 meses</span>
+    </div>
+  </div>
+</div>
+
+<footer>FONDEPES — Fondo Nacional de Desarrollo Pesquero · Especialidad Costas y Puertos · Datos actualizados desde Google Sheets</footer>
+
+<script>
+const CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vSTnU_XwKIgYgdT92Wx0GjMcLD62CG0FdV3PN_scWPQiGj-nunN23NuovhP6vgwvWUmD6ZAv6P84-Mn/pub?gid=1883241864&single=true&output=csv';
+
+const ALIAS={
+  ipa:       ['ipa','desembarcadero','nombre','infraestructura','denominacion'],
+  region:    ['region','departamento','ubicacion','localidad','provincia'],
+  entidad:   ['entidad titular','entidad','titular ipa','propietario','titular de la ipa','administrador','entidad administradora'],
+  docAdmin:  ['documento','doc admin','doc. admin','documento administracion','convenio','contrato','documento con que se otorga'],
+  resolucion:['resolucion dicapi','resolucion','res. dicapi','res dicapi','numero resolucion','resoluciones dicapi','resoluciones emitidas'],
+  inicio:    ['inicio','fecha inicio','inicio vigencia','fecha de inicio','fecha inicio vigencia'],
+  termino:   ['termino','termino vigencia','fecha termino','vencimiento','vcto','expiracion','fecha termino vigencia','termino de vigencia'],
+  titular:   ['titular autorizacion','titular de la autorizacion','titular auth','titular autorización','autorizacion a nombre','concesionario'],
+  estado:    ['estado','status','situacion','estado tramite','estado autorizacion']
+};
+
+let todos=[],filt=[],pg=1,ppp=15,colO='',dirO=1,tabA='todos';
+let gE=null,gT=null;
+
+const n=s=>String(s||'').toLowerCase().trim();
+
+function parseCSV(txt){
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length)return[];
+  const delim=lines[0].split('\t').length>lines[0].split(',').length?'\t':',';
+  function pLine(line){
+    const res=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(c===delim&&!inQ){res.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    res.push(cur.trim());return res;
+  }
+  const hdrs=pLine(lines[0]);
+  const cm={};
+  hdrs.forEach((h,i)=>{
+    const hn=n(h);
+    for(const[k,als]of Object.entries(ALIAS)){
+      if(cm[k]===undefined&&als.some(a=>hn.includes(a)))cm[k]=i;
+    }
+  });
+  return lines.slice(1).map(l=>{
+    const r=pLine(l);
+    if(r.every(c=>!c))return null;
+    return{ipa:r[cm.ipa]||'—',region:r[cm.region]||'—',entidad:r[cm.entidad]||'—',
+           docAdmin:r[cm.docAdmin]||'—',resolucion:r[cm.resolucion]||'—',
+           inicio:r[cm.inicio]||'—',termino:r[cm.termino]||'—',
+           titular:r[cm.titular]||'—',estado:r[cm.estado]||'—'};
+  }).filter(Boolean);
+}
+
+function pFecha(d){
+  if(!d||d==='—')return null;
+  let m=d.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m)return new Date(+m[3],+m[2]-1,+m[1]);
+  m=d.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  return null;
+}
+const vencido=d=>{const f=pFecha(d);return f&&f<new Date();};
+const porVencer=d=>{const f=pFecha(d);if(!f)return false;return(f-new Date())/864e5<=180&&(f-new Date())/864e5>=0;};
+const esFon=s=>n(s).includes('fondepes');
+
+function show(id){document.getElementById(id).style.display=''}
+function hide(id){document.getElementById(id).style.display='none'}
+function setPill(type,txt){
+  const p=document.getElementById('pill');
+  p.className='pill'+(type!=='ok'?' '+type:'');
+  p.querySelector('.pdot').style.background=type==='ok'?'#1d9e75':type==='err'?'var(--red)':'rgba(255,255,255,0.3)';
+  document.getElementById('ptxt').textContent=txt;
+}
+
+async function cargar(){
+  show('scrLoad');hide('scrErr');hide('dash');
+  setPill('ld','Cargando...');
+  try{
+    const r=await fetch(CSV+'&nocache='+Date.now());
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const txt=await r.text();
+    if(!txt.trim())throw new Error('El archivo está vacío.');
+    todos=parseCSV(txt);
+    if(!todos.length)throw new Error('No se reconocieron columnas. Verifica los encabezados del Excel.');
+    poblarFiltros();setTab('todos');
+    hide('scrLoad');show('dash');
+    setPill('ok','Actualizado '+new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){
+    hide('scrLoad');show('scrErr');
+    document.getElementById('emsg').textContent=e.message;
+    setPill('err','Error al cargar');
+  }
+}
+
+function poblarFiltros(){
+  const u=k=>[...new Set(todos.map(d=>d[k]).filter(v=>v&&v!=='—'))].sort();
+  llenar('fReg',u('region'),'Todas las regiones');
+  llenar('fEst',u('estado'),'Todos los estados');
+  llenar('fTit',u('titular'),'Todos los titulares');
+}
+function llenar(id,opts,def){
+  const s=document.getElementById(id);
+  s.innerHTML='<option value="">'+def+'</option>';
+  opts.forEach(o=>{const e=document.createElement('option');e.value=o;e.textContent=o;s.appendChild(e);});
+}
+
+function cTab(t){
+  if(t==='fondepes')return todos.filter(d=>esFon(d.titular)||esFon(d.entidad)).length;
+  if(t==='terceros')return todos.filter(d=>!esFon(d.titular)&&d.titular!=='—').length;
+  if(t==='vencidos')return todos.filter(d=>vencido(d.termino)||porVencer(d.termino)).length;
+  if(t==='criticos')return todos.filter(d=>vencido(d.termino)&&!esFon(d.titular)&&d.titular!=='—').length;
+  return todos.length;
+}
+
+function setTab(t){
+  tabA=t;
+  const defs=[{id:'todos',l:'Todos'},{id:'fondepes',l:'Titularidad FONDEPES'},{id:'terceros',l:'Titularidad terceros'},{id:'vencidos',l:'Vencidos / por vencer'},{id:'criticos',l:'Críticos (tercero+vencido)'}];
+  document.getElementById('tabBar').innerHTML=defs.map(tb=>`<button class="tab${tb.id===t?' act':''}" onclick="setTab('${tb.id}')">${tb.l}<span class="tc">${cTab(tb.id)}</span></button>`).join('');
+  filtrar();
+}
+
+function filtrar(){
+  const q=n(document.getElementById('srch').value);
+  const reg=document.getElementById('fReg').value;
+  const est=document.getElementById('fEst').value;
+  const tit=document.getElementById('fTit').value;
+  let base=todos;
+  if(tabA==='fondepes')base=todos.filter(d=>esFon(d.titular)||esFon(d.entidad));
+  else if(tabA==='terceros')base=todos.filter(d=>!esFon(d.titular)&&d.titular!=='—');
+  else if(tabA==='vencidos')base=todos.filter(d=>vencido(d.termino)||porVencer(d.termino));
+  else if(tabA==='criticos')base=todos.filter(d=>vencido(d.termino)&&!esFon(d.titular)&&d.titular!=='—');
+  filt=base.filter(d=>
+    (!q||n(d.ipa).includes(q)||n(d.entidad).includes(q)||n(d.resolucion).includes(q)||n(d.titular).includes(q)||n(d.region).includes(q))&&
+    (!reg||d.region===reg)&&(!est||d.estado===est)&&(!tit||d.titular===tit)
+  );
+  if(colO)doSort();
+  pg=1;
+  rAlertas();rStats();rGraficos();rTabla();
+}
+
+function ord(c){if(colO===c)dirO*=-1;else{colO=c;dirO=1;}doSort();rTabla();}
+function doSort(){filt.sort((a,b)=>String(a[colO]||'').localeCompare(String(b[colO]||''),'es')*dirO);}
+
+function rAlertas(){
+  const crit=todos.filter(d=>vencido(d.termino)&&!esFon(d.titular)&&d.titular!=='—');
+  const fV=todos.filter(d=>vencido(d.termino)&&esFon(d.titular));
+  const fPV=todos.filter(d=>porVencer(d.termino)&&esFon(d.titular));
+  let h='';
+  if(crit.length)h+=`<div class="al al-r"><div class="al-t">Sin responsabilidad administrativa FONDEPES — ${crit.length} autorización(es) vencida(s) con titular tercero</div><div class="al-b">La renovación corresponde a su titular actual, no a FONDEPES: <strong>${crit.map(d=>d.ipa).join(', ')}</strong>.</div></div>`;
+  if(fV.length)h+=`<div class="al al-a"><div class="al-t">Acción requerida — ${fV.length} autorización(es) vencida(s) bajo titularidad FONDEPES</div><div class="al-b">Gestionar renovación ante DICAPI: <strong>${fV.map(d=>d.ipa).join(', ')}</strong>.</div></div>`;
+  if(fPV.length)h+=`<div class="al al-a"><div class="al-t">Próximo vencimiento — ${fPV.length} autorización(es) FONDEPES vencen en menos de 6 meses</div><div class="al-b">Iniciar gestión preventiva: <strong>${fPV.map(d=>d.ipa).join(', ')}</strong>.</div></div>`;
+  document.getElementById('alertas').innerHTML=h;
+}
+
+function rStats(){
+  const tot=todos.length;
+  const fon=todos.filter(d=>esFon(d.titular)).length;
+  const ter=todos.filter(d=>!esFon(d.titular)&&d.titular!=='—').length;
+  const pv=todos.filter(d=>porVencer(d.termino)).length;
+  const vF=todos.filter(d=>vencido(d.termino)&&esFon(d.titular)).length;
+  const cr=todos.filter(d=>vencido(d.termino)&&!esFon(d.titular)&&d.titular!=='—').length;
+  document.getElementById('stats').innerHTML=`
+    <div class="sc navy"><div class="sl">Total IPA registradas</div><div class="sv">${tot}</div><div class="sub">14 regiones</div></div>
+    <div class="sc green"><div class="sl">Titular FONDEPES</div><div class="sv">${fon}</div><div class="sub">${tot?Math.round(fon/tot*100):0}% del total</div></div>
+    <div class="sc gray"><div class="sl">Titular terceros</div><div class="sv">${ter}</div><div class="sub">otra entidad</div></div>
+    <div class="sc amber"><div class="sl">Por vencer ≤ 6 meses</div><div class="sv">${pv}</div><div class="sub">acción próxima</div></div>
+    <div class="sc red"><div class="sl">Vencidas FONDEPES</div><div class="sv">${vF}</div><div class="sub">renovar ante DICAPI</div></div>
+    <div class="sc red"><div class="sl">Críticas (tercero+vencido)</div><div class="sv">${cr}</div><div class="sub">sin responsabilidad</div></div>`;
+}
+
+function rGraficos(){
+  const ec={},tc={'FONDEPES':0,'Terceros':0,'Sin asignar':0};
+  todos.forEach(d=>{
+    ec[d.estado]=(ec[d.estado]||0)+1;
+    if(esFon(d.titular))tc['FONDEPES']++;
+    else if(d.titular==='—')tc['Sin asignar']++;
+    else tc['Terceros']++;
+  });
+  const cols=Object.keys(ec).map(s=>{
+    const sn=n(s);
+    if(sn.includes('vigente'))return'#1d9e75';
+    if(sn.includes('tr')||sn.includes('proceso')||sn.includes('pendiente'))return'#378add';
+    if(sn.includes('observ')||sn.includes('vencer'))return'#ef9f27';
+    if(sn.includes('vencido'))return'#e24b4a';
+    return'#b4b2a9';
+  });
+  if(gE)gE.destroy();if(gT)gT.destroy();
+  gE=new Chart(document.getElementById('cEst'),{type:'doughnut',data:{labels:Object.keys(ec),datasets:[{data:Object.values(ec),backgroundColor:cols,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11,family:'DM Sans'},boxWidth:10,padding:7}}}}});
+  gT=new Chart(document.getElementById('cTit'),{type:'bar',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:['#0a2240','#ef9f27','#b4b2a9'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},beginAtZero:true}}}});
+}
+
+function bCls(s){
+  const sn=n(s);
+  if(sn.includes('vigente'))return'badge bg';
+  if(sn.includes('tr')||sn.includes('proceso')||sn.includes('pendiente'))return'badge bb';
+  if(sn.includes('observ')||sn.includes('vencer'))return'badge ba';
+  if(sn.includes('vencido'))return'badge br';
+  return'badge bgr';
+}
+
+function rTabla(){
+  const s=(pg-1)*ppp,rows=filt.slice(s,s+ppp);
+  document.getElementById('fc').textContent=filt.length+' registros'+(filt.length!==todos.length?' (filtrado de '+todos.length+')':'');
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="9" class="empty-td">No se encontraron registros con los filtros aplicados.</td></tr>';rPag();return;}
+  tb.innerHTML=rows.map(d=>{
+    const venc=vencido(d.termino),pv=porVencer(d.termino),fon=esFon(d.titular);
+    let rc='';
+    if(venc&&!fon&&d.titular!=='—')rc='rc';
+    else if(venc&&fon)rc='rf';
+    else if(pv)rc='rw';
+    const tTag=fon?`<span class="tf">FONDEPES</span>`:(d.titular==='—'?'<span style="color:#bbb;font-size:12px">—</span>':`<span class="tt">${d.titular}</span>`);
+    const fV=venc?`<span style="color:var(--red-dk);font-weight:500">${d.termino}</span>`:pv?`<span style="color:var(--amber-dk);font-weight:500">${d.termino}</span>`:d.termino;
+    return`<tr class="${rc}"><td style="font-weight:500">${d.ipa}</td><td>${d.region}</td><td style="font-size:11px">${d.entidad}</td><td style="font-size:11px;color:var(--muted)">${d.docAdmin}</td><td style="font-size:11px;font-family:var(--mono)">${d.resolucion}</td><td style="font-size:11px">${d.inicio}</td><td style="font-size:11px">${fV}</td><td>${tTag}</td><td><span class="${bCls(d.estado)}">${d.estado}</span></td></tr>`;
+  }).join('');
+  rPag();
+}
+
+function rPag(){
+  const tot=filt.length,pages=Math.ceil(tot/ppp)||1,s=(pg-1)*ppp+1,e=Math.min(pg*ppp,tot);
+  document.getElementById('pag').innerHTML=`<span>Mostrando ${s}–${e} de ${tot} registros</span><div class="pbtns"><button class="pb" onclick="irP(${pg-1})" ${pg<=1?'disabled':''}>← Anterior</button><span style="font-size:11px;padding:0 4px">Página ${pg} de ${pages}</span><button class="pb" onclick="irP(${pg+1})" ${pg>=pages?'disabled':''}>Siguiente →</button></div>`;
+}
+function irP(p){const pages=Math.ceil(filt.length/ppp)||1;pg=Math.max(1,Math.min(p,pages));rTabla();window.scrollTo({top:0,behavior:'smooth'});}
+
+window.addEventListener('DOMContentLoaded',cargar);
+</script>
+</body>
+</html>
